@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Anatomy of a Wager | Interactive Poker Chip Template</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Cinzel', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            felt: {
+              950: '#05140e',
+              900: '#092218',
+              800: '#0e3325',
+            },
+            gold: {
+              300: '#fde08d',
+              400: '#f5c451',
+              500: '#d4af37',
+              600: '#aa8220',
+            },
+            crimson: {
+              500: '#dc2626',
+              600: '#b91c1c',
+              700: '#991b1b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background: radial-gradient(circle at 30% 30%, #0d2e22 0%, #061510 55%, #030907 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 3D Chip Flip Container */
+    .perspective-container {
+      perspective: 1400px;
+    }
+
+    .chip-3d-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      transform-style: preserve-3d;
+      transition: transform 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .chip-3d-wrapper.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .chip-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.75));
+    }
+
+    .chip-face-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Interactive SVG Zone Styling */
+    .svg-zone {
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .svg-zone:hover {
+      filter: brightness(1.18) drop-shadow(0 0 10px rgba(245, 196, 81, 0.55));
+    }
+
+    .svg-zone.active-zone {
+      filter: brightness(1.24) drop-shadow(0 0 16px rgba(245, 196, 81, 0.9));
+      stroke: #fde08d !important;
+      stroke-width: 3px !important;
+    }
+
+    /* Spin Animation for Near-Miss Demo */
+    @keyframes pointerPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.15); }
+    }
+
+    .pointer-bounce {
+      animation: pointerPulse 0.4s ease-in-out infinite;
+    }
+
+    /* Breathing Pacer Circle Animation */
+    .breath-circle {
+      transition: transform 4s ease-in-out, background-color 4s ease-in-out, box-shadow 4s ease-in-out;
+    }
+
+    /* Edit Mode Dashed Outlines */
+    body.studio-edit-active .editable-highlight {
+      outline: 1px dashed rgba(245, 196, 81, 0.55);
+      outline-offset: 4px;
+      cursor: pointer;
+    }
+    body.studio-edit-active .editable-highlight:hover {
+      outline: 2px solid #f5c451;
+      background-color: rgba(245, 196, 81, 0.06);
+    }
+
+    /* Subtle Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(5, 20, 14, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.35);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(212, 175, 55, 0.6);
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-gold-500 selection:text-slate-950 flex flex-col min-h-screen">
+
+  <!-- TOP NAVIGATION / HEADER -->
+  <header class="border-b border-emerald-900/60 bg-slate-950/75 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand / Title -->
+      <div class="flex items-center gap-3 editable-highlight rounded-xl px-2 py-1" onclick="openEditorTab('design')" title="Click to customize header & chip text">
+        <div id="headerMiniChip" class="w-10 h-10 rounded-full bg-gradient-to-br from-crimson-500 to-crimson-700 p-0.5 shadow-lg flex items-center justify-center border border-gold-400/50">
+          <div class="w-full h-full rounded-full border-2 border-dashed border-white/80 flex items-center justify-center font-display font-bold text-xs text-gold-300" id="headerMiniChipText">
+            50%
+          </div>
+        </div>
+        <div>
+          <span id="siteKickerText" class="text-[11px] font-mono uppercase tracking-widest text-gold-400 block">Interactive Neuroscience Exhibit</span>
+          <h1 id="siteMainTitleText" class="font-display text-lg sm:text-xl font-bold tracking-wide text-white">The Anatomy of a Wager</h1>
+        </div>
+      </div>
+
+      <!-- Exploration Progress & Studio Controls -->
+      <div class="flex items-center gap-2.5 sm:gap-3.5 flex-wrap">
+        <!-- Progress Pill -->
+        <div class="hidden md:flex items-center gap-2 bg-slate-900/90 border border-emerald-800/70 px-3 py-1.5 rounded-full">
+          <span class="text-xs text-slate-300 font-medium">Explored:</span>
+          <div class="flex items-center gap-1" id="progressDots"></div>
+          <span id="progressCountText" class="text-xs font-mono font-semibold text-gold-400">1/5</span>
+        </div>
+
+        <!-- Audio Toggle -->
+        <button id="audioToggleBtn" onclick="toggleAudio()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-medium text-slate-200 transition" title="Toggle synthesized sound effects">
+          <i data-lucide="volume-2" id="audioIcon" class="w-4 h-4 text-gold-400"></i>
+          <span id="audioLabel" class="hidden sm:inline">SFX: On</span>
+        </button>
+
+        <!-- BUILT-IN VISUAL TEMPLATE EDITOR BUTTON (Hidden automatically in exported student presentation if desired) -->
+        <button id="studioToggleBtn" onclick="toggleStudioDrawer()" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-gold-600 hover:from-amber-400 hover:to-gold-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-950/50 border border-gold-300 transition transform active:scale-95">
+          <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+          <span id="studioToggleBtnText">Customize Template</span>
+        </button>
+
+        <!-- Helpline Quick Badge -->
+        <a id="helplineHeaderBadge" href="tel:18004262537" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 text-xs font-semibold transition">
+          <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
+          <span id="helplineHeaderText">1-800-GAMBLER</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ZONE SELECTOR PILL BAR (Quick Jump) -->
+  <div class="bg-slate-950/40 border-b border-emerald-950/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0" id="zonePillBar">
+        <!-- Dynamically rendered pills -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT GRID -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+
+    <!-- LEFT COLUMN: INTERACTIVE 3D SVG POKER CHIP + NEAR-MISS DEMO (5 Cols on Desktop) -->
+    <section class="lg:col-span-5 flex flex-col items-center lg:sticky lg:top-24">
+      
+      <!-- Instruction Banner above Chip -->
+      <div class="w-full mb-3 flex items-center justify-between text-xs text-slate-300 bg-slate-900/70 border border-emerald-900/60 px-3.5 py-2 rounded-xl">
+        <div class="flex items-center gap-2">
+          <i data-lucide="mouse-pointer-click" class="w-4 h-4 text-gold-400 shrink-0"></i>
+          <span id="chipHoverHint">Click any ring on the chip to inspect its layer</span>
+        </div>
+        <span id="faceIndicatorBadge" class="font-mono text-[11px] uppercase px-2 py-0.5 rounded bg-crimson-600/30 text-red-300 border border-red-500/30">
+          Front: Addiction
+        </span>
+      </div>
+
+      <!-- 3D Poker Chip Stage -->
+      <div class="relative w-full max-w-[390px] sm:max-w-[430px] mx-auto my-2">
+        <!-- Top Gold Indicator Pointer (Used for Near-Miss Spin Demo) -->
+        <div id="spinPointer" class="absolute -top-4 left-1/2 -translate-x-1/2 z-30 opacity-0 transition-opacity duration-300 pointer-events-none">
+          <div class="flex flex-col items-center">
+            <span class="px-2 py-0.5 rounded bg-gold-500 text-slate-950 font-mono text-[10px] font-bold uppercase shadow">Payline</span>
+            <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[14px] border-t-gold-400 drop-shadow"></div>
+          </div>
+        </div>
+
+        <!-- 3D Flip Wrapper -->
+        <div class="perspective-container w-full">
+          <div id="chip3DWrapper" class="chip-3d-wrapper">
+
+            <!-- ================= FRONT FACE: ADDICTION MECHANICS (ZONES 1 - 4) ================= -->
+            <div class="chip-face chip-face-front">
+              <div id="chipSpinContainer" class="w-full h-full flex items-center justify-center transition-transform duration-[2600ms] ease-out">
+                <svg viewBox="0 0 500 500" class="w-full h-full select-none" aria-label="Interactive Casino Poker Chip Front">
+                  <defs>
+                    <filter id="clayShadow" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.6"/>
+                    </filter>
+
+                    <!-- Dynamic Front Clay Radial Gradient (Zone 2) -->
+                    <radialGradient id="frontOuterGrad" cx="35%" cy="30%" r="70%">
+                      <stop id="frontOuterStop1" offset="0%" stop-color="#dc2626"/>
+                      <stop id="frontOuterStop2" offset="60%" stop-color="#991b1b"/>
+                      <stop id="frontOuterStop3" offset="100%" stop-color="#450a0a"/>
+                    </radialGradient>
+
+                    <!-- Dynamic Recessed Mold Ring Gradient (Zone 3) -->
+                    <radialGradient id="moldRingGrad" cx="50%" cy="50%" r="50%">
+                      <stop id="moldRingStop1" offset="0%" stop-color="#450a0a"/>
+                      <stop id="moldRingStop2" offset="75%" stop-color="#7f1d1d"/>
+                      <stop id="moldRingStop3" offset="100%" stop-color="#450a0a"/>
+                    </radialGradient>
+
+                    <!-- Dynamic Core Inlay Gradient (Zone 4) -->
+                    <radialGradient id="inlayCoreGrad" cx="40%" cy="35%" r="65%">
+                      <stop id="inlayCoreStop1" offset="0%" stop-color="#1e293b"/>
+                      <stop id="inlayCoreStop2" offset="100%" stop-color="#020617"/>
+                    </radialGradient>
+
+                    <!-- Gold Foil Accent Gradient -->
+                    <linearGradient id="goldFoil" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#fde08d"/>
+                      <stop id="accentFoilStop" offset="50%" stop-color="#f5c451"/>
+                      <stop offset="100%" stop-color="#9a6f18"/>
+                    </linearGradient>
+
+                    <clipPath id="outerChipClip">
+                      <circle cx="250" cy="250" r="240"/>
+                    </clipPath>
+
+                    <path id="topArcPath" d="M 102,250 A 148,148 0 1,1 398,250" />
+                    <path id="bottomArcPath" d="M 398,250 A 148,148 0 1,1 102,250" />
+                  </defs>
+
+                  <!-- ================= ZONE 2: OUTER RING (BASE CLAY BODY) ================= -->
+                  <g id="svg-zone-2" class="svg-zone" onclick="selectZone(2)" onmouseenter="previewZoneHint(2)" onmouseleave="resetZoneHint()">
+                    <circle cx="250" cy="250" r="240" fill="url(#frontOuterGrad)" stroke="url(#goldFoil)" stroke-width="2.5" />
+                    <circle cx="250" cy="250" r="204" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="6 4" />
+                  </g>
+
+                  <!-- ================= ZONE 1: EDGE STRIPES (8 OUTER RIM NOTCHES) ================= -->
+                  <g id="svg-zone-1" class="svg-zone" clip-path="url(#outerChipClip)" onclick="selectZone(1)" onmouseenter="previewZoneHint(1)" onmouseleave="resetZoneHint()">
+                    <circle cx="250" cy="250" r="222" fill="none" stroke="transparent" stroke-width="36" />
+                    <g id="edgeStripesGroup">
+                      <!-- Populated dynamically with user's custom stripe colors -->
+                    </g>
+                  </g>
+
+                  <!-- Zone 2 Curved Label Markers -->
+                  <g pointer-events="none" opacity="0.9">
+                    <text font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="600" fill="#fde08d" letter-spacing="3">
+                      <textPath id="svgFrontTopArcText" href="#topArcPath" startOffset="50%" text-anchor="middle">
+                        ★ 60% OF LOSSES FROM HARMFUL PLAY ★
+                      </textPath>
+                    </text>
+                    <text font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="600" fill="#fde08d" letter-spacing="3">
+                      <textPath id="svgFrontBottomArcText" href="#bottomArcPath" startOffset="50%" text-anchor="middle">
+                        ★ DSM-5 BEHAVIORAL ADDICTION ★
+                      </textPath>
+                    </text>
+                  </g>
+
+                  <!-- ================= ZONE 3: INNER DIE / MOLD RING ================= -->
+                  <g id="svg-zone-3" class="svg-zone" onclick="selectZone(3)" onmouseenter="previewZoneHint(3)" onmouseleave="resetZoneHint()">
+                    <circle cx="250" cy="250" r="143" fill="none" stroke="url(#moldRingGrad)" stroke-width="46" />
+                    <circle cx="250" cy="250" r="166" fill="none" stroke="url(#goldFoil)" stroke-width="2.5" />
+                    <circle cx="250" cy="250" r="120" fill="none" stroke="url(#goldFoil)" stroke-width="2.5" stroke-dasharray="10 5" />
+
+                    <g fill="#fde08d" font-size="18" text-anchor="middle" dominant-baseline="central" opacity="0.9">
+                      <text x="250" y="107">♠</text>
+                      <text x="351" y="149">♦</text>
+                      <text x="393" y="250">♣</text>
+                      <text x="351" y="351">♥</text>
+                      <text x="250" y="393">♠</text>
+                      <text x="149" y="351">♦</text>
+                      <text x="107" y="250">♣</text>
+                      <text x="149" y="149">♥</text>
+                    </g>
+                  </g>
+
+                  <!-- ================= ZONE 4: THE CENTER INLAY (NEUROCHEMISTRY) ================= -->
+                  <g id="svg-zone-4" class="svg-zone" onclick="selectZone(4)" onmouseenter="previewZoneHint(4)" onmouseleave="resetZoneHint()">
+                    <circle cx="250" cy="250" r="115" fill="url(#inlayCoreGrad)" stroke="url(#goldFoil)" stroke-width="4" />
+                    <circle cx="250" cy="250" r="103" fill="none" stroke="rgba(245, 196, 81, 0.35)" stroke-width="1" />
+
+                    <!-- Stylized Dopamine Molecule / Neural Pathway Emblem -->
+                    <g stroke="url(#goldFoil)" stroke-width="2" fill="none" opacity="0.38">
+                      <polygon points="250,185 276,200 276,230 250,245 224,230 224,200" />
+                      <line x1="250" y1="245" x2="250" y2="272" />
+                      <line x1="250" y1="272" x2="272" y2="286" />
+                      <circle cx="276" cy="288" r="4" fill="#f5c451" />
+                      <circle cx="224" cy="200" r="3.5" fill="#f5c451" />
+                      <circle cx="224" cy="230" r="3.5" fill="#f5c451" />
+                    </g>
+
+                    <!-- Customizable Center Inlay Typography -->
+                    <text id="svgCenterTopLabel" x="250" y="172" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#f5c451" letter-spacing="2.5">
+                      THE HOUSE EDGE
+                    </text>
+                    <text id="svgCenterMainValue" x="250" y="232" text-anchor="middle" font-family="Cinzel, serif" font-size="38" font-weight="800" fill="#ffffff" filter="url(#clayShadow)">
+                      50%
+                    </text>
+                    <text id="svgCenterSubLabel" x="250" y="254" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="600" fill="#f87171" letter-spacing="1.5">
+                      DOPAMINE PEAK
+                    </text>
+                    <text id="svgCenterBottomTag" x="250" y="308" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#cbd5e1" letter-spacing="1">
+                      WANTING &gt; LIKING
+                    </text>
+                    <text x="250" y="326" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#94a3b8">
+                      [CLICK CORE]
+                    </text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- ================= BACK FACE: ZONE 5 RECOVERY & REWIRING ================= -->
+            <div class="chip-face chip-face-back">
+              <svg viewBox="0 0 500 500" class="w-full h-full select-none cursor-pointer" onclick="selectZone(5)" aria-label="Interactive Recovery Token Back Face">
+                <defs>
+                  <radialGradient id="emeraldRecoveryGrad" cx="35%" cy="30%" r="70%">
+                    <stop id="backOuterStop1" offset="0%" stop-color="#10b981"/>
+                    <stop id="backOuterStop2" offset="60%" stop-color="#047857"/>
+                    <stop id="backOuterStop3" offset="100%" stop-color="#064e3b"/>
+                  </radialGradient>
+                  <radialGradient id="recoveryCoreGrad" cx="50%" cy="40%" r="65%">
+                    <stop offset="0%" stop-color="#0f2922"/>
+                    <stop offset="100%" stop-color="#02100c"/>
+                  </radialGradient>
+                  <path id="backTopArc" d="M 92,250 A 158,158 0 1,1 408,250" />
+                  <path id="backBottomArc" d="M 408,250 A 158,158 0 1,1 92,250" />
+                </defs>
+
+                <circle cx="250" cy="250" r="240" fill="url(#emeraldRecoveryGrad)" stroke="#f5c451" stroke-width="4" />
+
+                <g clip-path="url(#outerChipClip)">
+                  <g transform="rotate(0 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#fde08d"/></g>
+                  <g transform="rotate(45 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#ecfdf5"/></g>
+                  <g transform="rotate(90 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#fde08d"/></g>
+                  <g transform="rotate(135 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#ecfdf5"/></g>
+                  <g transform="rotate(180 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#fde08d"/></g>
+                  <g transform="rotate(225 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#ecfdf5"/></g>
+                  <g transform="rotate(270 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#fde08d"/></g>
+                  <g transform="rotate(315 250 250)"><rect x="228" y="6" width="44" height="32" rx="4" fill="#ecfdf5"/></g>
+                </g>
+
+                <circle cx="250" cy="250" r="196" fill="none" stroke="#fde08d" stroke-width="2" stroke-dasharray="8 6" />
+                <circle cx="250" cy="250" r="134" fill="url(#recoveryCoreGrad)" stroke="#f5c451" stroke-width="4" />
+
+                <text font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#ecfdf5" letter-spacing="3.5">
+                  <textPath href="#backTopArc" startOffset="50%" text-anchor="middle">
+                    ★ NEUROPLASTICITY &amp; REWIRING ★
+                  </textPath>
+                </text>
+                <text font-family="JetBrains Mono, monospace" font-size="12" font-weight="600" fill="#fde08d" letter-spacing="3.5">
+                  <textPath href="#backBottomArc" startOffset="50%" text-anchor="middle">
+                    ★ CALL OR TEXT 1-800-GAMBLER ★
+                  </textPath>
+                </text>
+
+                <circle cx="250" cy="250" r="118" fill="none" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1.5" />
+                <text x="250" y="182" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#34d399" letter-spacing="2">
+                  ZONE 5 • THE FLIP SIDE
+                </text>
+                <text id="svgBackMainTitle" x="250" y="232" text-anchor="middle" font-family="Cinzel, serif" font-size="30" font-weight="800" fill="#ffffff">
+                  RECLAIM
+                </text>
+                <text id="svgBackSubTitle" x="250" y="260" text-anchor="middle" font-family="Cinzel, serif" font-size="18" font-weight="700" fill="#fde08d" letter-spacing="3">
+                  CONTROL
+                </text>
+                <text x="250" y="298" text-anchor="middle" font-family="Inter, sans-serif" font-size="11.5" fill="#a7f3d0">
+                  15-Min Urge Surfing • CBT
+                </text>
+                <text x="250" y="320" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#6ee7b7">
+                  Self-Exclusion &amp; Support
+                </text>
+              </svg>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION CONTROLS BELOW CHIP: FLIP CHIP + NEAR-MISS SIMULATOR -->
+      <div class="w-full max-w-[430px] mt-3 space-y-3">
+        <div class="grid grid-cols-2 gap-3" id="chipActionButtonsGrid">
+          <!-- Flip Chip Button -->
+          <button onclick="toggleFlipChip()" id="flipChipBtn" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white shadow-lg shadow-emerald-950/60 border border-emerald-400/40 transition transform active:scale-95">
+            <i data-lucide="rotate-y" class="w-4 h-4"></i>
+            <span id="flipChipBtnText">Flip Chip (Recovery)</span>
+          </button>
+
+          <!-- Spin / Near-Miss Simulator Button -->
+          <button onclick="triggerNearMissSpin()" id="spinChipBtn" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-gold-600 hover:from-amber-400 hover:to-gold-500 text-slate-950 shadow-lg shadow-amber-950/50 border border-gold-300/60 transition transform active:scale-95">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Spin: Near-Miss Demo</span>
+          </button>
+        </div>
+
+        <!-- Live Near-Miss Telemetry Readout Box -->
+        <div id="nearMissReadout" class="bg-slate-950/85 border border-slate-800/90 rounded-xl p-3.5 transition-all">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="font-mono uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
+              Variable-Ratio Lab
+            </span>
+            <span id="spinStatsCounter" class="font-mono text-[11px] text-slate-400">Spins: 0 | Wins: 0 | Near-Misses: 0</span>
+          </div>
+          <p id="spinResultMessage" class="text-xs text-slate-300 leading-relaxed">
+            Test how casinos hook the brain: click <strong class="text-gold-300">Spin: Near-Miss Demo</strong> to experience how "almost hitting" the gold top stripe triggers a dopamine surge without paying out.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: RESEARCH & INSPECTION PANEL (7 Cols on Desktop) -->
+    <section class="lg:col-span-7 flex flex-col">
+
+      <!-- Main Inspection Card -->
+      <div class="bg-slate-950/75 backdrop-blur-xl border border-emerald-900/70 rounded-2xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+        
+        <!-- Decorative Top Glow Bar -->
+        <div id="panelTopAccent" class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-crimson-500 via-gold-400 to-crimson-600"></div>
+
+        <!-- Zone Header Metadata -->
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-5 border-b border-slate-800/90">
+          <div class="editable-highlight rounded-xl p-1 -m-1 flex-1" onclick="openEditorTab('zone')" title="Click to edit this zone's title and description">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span id="activeZoneBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-crimson-500/20 text-red-300 border border-red-500/30">
+                Zone 1 of 5 • Outer Rim Notches
+              </span>
+              <span id="activeZoneAnatomyTag" class="text-xs font-mono text-gold-400">
+                • 6–8 Edge Stripes
+              </span>
+            </div>
+            <h2 id="activeZoneTitle" class="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              The Hook &amp; Environmental Triggers
+            </h2>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- Quick Edit This Zone Button -->
+            <button onclick="openEditorTab('zone')" class="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-xs font-semibold text-gold-300 flex items-center gap-1.5 transition" title="Edit the text and cards in this zone">
+              <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
+              <span>Edit Zone</span>
+            </button>
+
+            <!-- Next Zone Quick Button -->
+            <button onclick="cycleNextZone()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition">
+              <span>Next Layer</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Zone Intro Summary -->
+        <p id="activeZoneSubtitle" onclick="openEditorTab('zone')" class="editable-highlight rounded-lg p-1 -m-1 mt-4 text-sm sm:text-base text-slate-300 leading-relaxed" title="Click to edit zone description">
+          <!-- Populated dynamically -->
+        </p>
+
+        <!-- Optional Highlight Callout / Stat Box -->
+        <div id="activeZoneCalloutBox" onclick="openEditorTab('zone')" class="editable-highlight mt-4 hidden"></div>
+
+        <!-- Dynamic Fact Cards Grid -->
+        <div id="researchCardsContainer" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- INTERACTIVE WIDGET CONTAINER (Brain Stage Slider in Zone 4, or Urge Surfing Pacer in Zone 5) -->
+        <div id="specialInteractiveModule" class="mt-6"></div>
+
+        <!-- Bottom Takeaways / Citation Footer inside Panel -->
+        <div class="mt-6 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+          <div class="flex items-center gap-2 editable-highlight rounded px-1" onclick="openEditorTab('settings')">
+            <i data-lucide="book-open-check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+            <span id="citationsFooterText">Sources: DSM-5 (APA), World Health Organization (WHO), &amp; Incentive Sensitization Neurobiology</span>
+          </div>
+          <div class="font-mono text-[11px] text-slate-400">
+            Keys <kbd class="px-1.5 py-0.5 bg-slate-800 text-slate-200 rounded border border-slate-700">1</kbd>–<kbd class="px-1.5 py-0.5 bg-slate-800 text-slate-200 rounded border border-slate-700">5</kbd> switch zones
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= VISUAL TEMPLATE STUDIO DRAWER (NO-CODE EDITOR) ================= -->
+  <aside id="studioDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-slate-950/95 backdrop-blur-2xl border-l border-gold-500/40 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    
+    <!-- Studio Header -->
+    <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-gold-400">
+          <i data-lucide="Sliders" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Poker Chip Template Studio</h3>
+          <p class="text-[11px] text-slate-400">Customize text, colors &amp; cards without coding</p>
+        </div>
+      </div>
+      <button onclick="toggleStudioDrawer(false)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Studio Navigation Tabs -->
+    <div class="grid grid-cols-3 gap-1 p-2 bg-slate-900/60 border-b border-slate-800 text-xs font-semibold">
+      <button onclick="switchStudioTab('zone')" id="tabBtn-zone" class="py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 bg-gold-500 text-slate-950">
+        <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+        <span>1. Zone Content</span>
+      </button>
+      <button onclick="switchStudioTab('design')" id="tabBtn-design" class="py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 text-slate-300 hover:bg-slate-800">
+        <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+        <span>2. Chip Design</span>
+      </button>
+      <button onclick="switchStudioTab('settings')" id="tabBtn-settings" class="py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 text-slate-300 hover:bg-slate-800">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        <span>3. Export / Save</span>
+      </button>
+    </div>
+
+    <!-- Studio Scrollable Body -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-6 text-xs" id="studioDrawerBody">
+      
+      <!-- TAB 1: ZONE CONTENT EDITOR -->
+      <div id="studioTab-zone" class="space-y-5">
+        <!-- Zone Switcher inside Editor -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5">
+          <label class="block text-[11px] font-mono uppercase text-gold-400 mb-2">Select Chip Layer to Edit:</label>
+          <select id="editorZoneSelect" onchange="selectZone(parseInt(this.value, 10))" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-gold-400">
+            <option value="1">Zone 1: Edge Stripes (The Hook)</option>
+            <option value="2">Zone 2: Outer Ring (Stats & Scale)</option>
+            <option value="3">Zone 3: Inner Mold (Cognitive Traps)</option>
+            <option value="4">Zone 4: Center Inlay (Brain Chemistry)</option>
+            <option value="5">Zone 5: Flip Side (Recovery & Rewiring)</option>
+          </select>
+        </div>
+
+        <!-- Zone Title, Badge & Intro -->
+        <div class="space-y-3 bg-slate-900/60 border border-slate-800/90 rounded-xl p-4">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono flex items-center gap-1.5">
+            <i data-lucide="type" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span>Zone Header &amp; Summary</span>
+          </h4>
+
+          <div>
+            <label class="block text-slate-400 mb-1">Zone Title</label>
+            <input type="text" id="editZoneTitleInput" oninput="updateCurrentZoneField('title', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-400" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-slate-400 mb-1">Short Pill Tab Label</label>
+              <input type="text" id="editZonePillInput" oninput="updateCurrentZoneField('pillLabel', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-gold-400" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Chip Anatomy Tag</label>
+              <input type="text" id="editZoneAnatomyInput" oninput="updateCurrentZoneField('anatomyTag', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-gold-400" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">Intro Paragraph / Explanation</label>
+            <textarea id="editZoneSubtitleInput" rows="3" oninput="updateCurrentZoneField('subtitle', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-400"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">Optional Key Stat / Callout Banner (Leave blank to hide)</label>
+            <input type="text" id="editZoneCalloutInput" placeholder="e.g. Key Stat: Dopamine spikes highest at 50% uncertainty." oninput="updateCurrentZoneField('callout', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-400" />
+          </div>
+        </div>
+
+        <!-- Fact Cards List Editor -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono flex items-center gap-1.5">
+              <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-gold-400"></i>
+              <span>Fact Cards in This Zone</span>
+            </h4>
+            <button onclick="addFactCardToCurrentZone()" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 font-semibold flex items-center gap-1 transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add Card</span>
+            </button>
+          </div>
+
+          <div id="editorCardsList" class="space-y-3">
+            <!-- Dynamically populated editors for each card in the active zone -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: CHIP COLORS & TEXT DESIGN -->
+      <div id="studioTab-design" class="space-y-5 hidden">
+        
+        <!-- 1-Click Casino Color Presets -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span>1-Click Casino Chip Themes</span>
+          </h4>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="applyChipThemePreset('crimson')" class="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 flex items-center gap-2 text-left transition">
+              <span class="w-5 h-5 rounded-full bg-red-600 border-2 border-amber-300 shrink-0"></span>
+              <span class="font-medium text-white">Casino Crimson</span>
+            </button>
+            <button onclick="applyChipThemePreset('royal')" class="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 flex items-center gap-2 text-left transition">
+              <span class="w-5 h-5 rounded-full bg-blue-600 border-2 border-amber-300 shrink-0"></span>
+              <span class="font-medium text-white">Royal Shark Blue</span>
+            </button>
+            <button onclick="applyChipThemePreset('obsidian')" class="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 flex items-center gap-2 text-left transition">
+              <span class="w-5 h-5 rounded-full bg-slate-900 border-2 border-amber-400 shrink-0"></span>
+              <span class="font-medium text-white">Obsidian $100</span>
+            </button>
+            <button onclick="applyChipThemePreset('violet')" class="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700 flex items-center gap-2 text-left transition">
+              <span class="w-5 h-5 rounded-full bg-purple-600 border-2 border-amber-300 shrink-0"></span>
+              <span class="font-medium text-white">High-Roller Violet</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Color Pickers for Each Ring -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono">Custom Chip Ring Colors</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 mb-1">Outer Clay Body</label>
+              <input type="color" id="colorOuterBody" oninput="updateChipColor('outerBody', this.value)" class="w-full h-9 rounded cursor-pointer bg-slate-950 border border-slate-700 p-1" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Edge Stripes</label>
+              <input type="color" id="colorEdgeStripes" oninput="updateChipColor('edgeStripe', this.value)" class="w-full h-9 rounded cursor-pointer bg-slate-950 border border-slate-700 p-1" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Inner Mold Ring</label>
+              <input type="color" id="colorInnerMold" oninput="updateChipColor('innerMold', this.value)" class="w-full h-9 rounded cursor-pointer bg-slate-950 border border-slate-700 p-1" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Center Inlay Core</label>
+              <input type="color" id="colorCenterCore" oninput="updateChipColor('centerCore', this.value)" class="w-full h-9 rounded cursor-pointer bg-slate-950 border border-slate-700 p-1" />
+            </div>
+            <div class="col-span-2">
+              <label class="block text-slate-400 mb-1">Back Face (Recovery Side Color)</label>
+              <input type="color" id="colorBackRecovery" oninput="updateChipColor('backRecovery', this.value)" class="w-full h-9 rounded cursor-pointer bg-slate-950 border border-slate-700 p-1" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Stamped on the Poker Chip SVG -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono">Chip Center &amp; Rim Text</h4>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-slate-400 mb-1">Center Big Value</label>
+              <input type="text" id="chipTextMainVal" maxlength="8" oninput="updateChipText('centerMain', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Center Top Label</label>
+              <input type="text" id="chipTextTopLabel" maxlength="20" oninput="updateChipText('centerTop', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Center Sub Label</label>
+              <input type="text" id="chipTextSubLabel" maxlength="20" oninput="updateChipText('centerSub', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Center Bottom Tag</label>
+              <input type="text" id="chipTextBottomTag" maxlength="22" oninput="updateChipText('centerBottom', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Top Curved Rim Text</label>
+            <input type="text" id="chipTextTopArc" maxlength="38" oninput="updateChipText('topArc', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Bottom Curved Rim Text</label>
+            <input type="text" id="chipTextBottomArc" maxlength="38" oninput="updateChipText('bottomArc', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+          </div>
+        </div>
+
+        <!-- Website Header Title -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono">Website Header</h4>
+          <div>
+            <label class="block text-slate-400 mb-1">Project Kicker / Subtitle</label>
+            <input type="text" id="siteKickerInput" oninput="updateSiteMeta('kicker', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Main Website Title</label>
+            <input type="text" id="siteTitleInput" oninput="updateSiteMeta('title', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: INTERACTIVE WIDGETS & EXPORT -->
+      <div id="studioTab-settings" class="space-y-5 hidden">
+        
+        <!-- Toggle Interactive Simulators -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono">Interactive Add-On Widgets</h4>
+          
+          <label class="flex items-center justify-between gap-3 cursor-pointer py-1">
+            <div>
+              <span class="font-semibold text-white block">Near-Miss Spin Simulator</span>
+              <span class="text-[11px] text-slate-400">Lets visitors spin the chip to see near-miss psychology</span>
+            </div>
+            <input type="checkbox" id="toggleSpinDemoCheck" onchange="updateWidgetToggle('enableSpinDemo', this.checked)" class="w-4 h-4 accent-gold-400 rounded" />
+          </label>
+
+          <label class="flex items-center justify-between gap-3 cursor-pointer py-1 border-t border-slate-800/80 pt-2.5">
+            <div>
+              <span class="font-semibold text-white block">Brain Stage Slider (Zone 4)</span>
+              <span class="text-[11px] text-slate-400">Interactive Wanting vs. Liking dopamine comparison</span>
+            </div>
+            <input type="checkbox" id="toggleBrainSliderCheck" onchange="updateWidgetToggle('enableBrainSlider', this.checked)" class="w-4 h-4 accent-gold-400 rounded" />
+          </label>
+
+          <label class="flex items-center justify-between gap-3 cursor-pointer py-1 border-t border-slate-800/80 pt-2.5">
+            <div>
+              <span class="font-semibold text-white block">60-BPM Urge Surfing Pacer (Zone 5)</span>
+              <span class="text-[11px] text-slate-400">Guided breathing orb on the recovery side</span>
+            </div>
+            <input type="checkbox" id="toggleBreathingCheck" onchange="updateWidgetToggle('enableBreathingPacer', this.checked)" class="w-4 h-4 accent-gold-400 rounded" />
+          </label>
+        </div>
+
+        <!-- Citations & Footer -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-white text-xs uppercase tracking-wider font-mono">Citations &amp; Helpline</h4>
+          <div>
+            <label class="block text-slate-400 mb-1">Sources / Citations Line</label>
+            <input type="text" id="siteCitationsInput" oninput="updateSiteMeta('citations', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+          </div>
+        </div>
+
+        <!-- EXPORT & SAVE ACTIONS -->
+        <div class="bg-gradient-to-br from-emerald-950/80 to-slate-900 border border-emerald-500/40 rounded-xl p-4 space-y-3">
+          <h4 class="font-bold text-emerald-300 text-xs uppercase tracking-wider font-mono flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span>Save or Export Your Finished Website</span>
+          </h4>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Your edits auto-save in your browser automatically. When you're ready to turn in your project or upload to GitHub Pages / Netlify, click <strong>Export Finished HTML</strong> below to download a single file with all your custom text and colors baked in!
+          </p>
+
+          <label class="flex items-center gap-2 text-[11px] text-slate-300 pt-1 cursor-pointer">
+            <input type="checkbox" id="hideStudioOnExportCheck" class="accent-emerald-400 rounded" />
+            <span>Hide the "Customize Template" button in exported file (clean presentation mode)</span>
+          </label>
+
+          <div class="pt-2 space-y-2">
+            <button onclick="exportCustomHTMLFile()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-gold-500 hover:from-amber-300 hover:to-gold-400 text-slate-950 font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Export Finished HTML (index.html)</span>
+            </button>
+
+            <button onclick="resetTemplateToDefaults()" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-red-950/60 border border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-300 font-medium text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Reset All Content to Default Research</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Studio Footer Status -->
+    <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between text-[11px] text-slate-400">
+      <span id="autoSaveStatusText" class="flex items-center gap-1.5 text-emerald-400 font-mono">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        Auto-saved to browser
+      </span>
+      <button onclick="toggleStudioDrawer(false)" class="text-gold-300 hover:underline font-semibold">Done Editing</button>
+    </div>
+  </aside>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto border-t border-emerald-950/90 bg-slate-950/80 py-5 px-4 sm:px-6 lg:px-8 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p>
+        <strong class="text-slate-200">Interactive Poker Chip Exhibit:</strong> Click any ring on the chip to explore the psychology and neuroscience of gambling addiction.
+      </p>
+      <p class="text-emerald-300 font-medium">
+        Need confidential support? Call or text <strong>1-800-GAMBLER</strong> (1-800-426-2537) • 24/7 Free Helpline.
+      </p>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC, TEMPLATE STATE & STUDIO EDITOR -->
+  <script>
+    // ============================================================================
+    // 1. DEFAULT TEMPLATE CONFIGURATION (BAKED IN OR OVERRIDDEN BY USER EDITS)
+    // ============================================================================
+    /*__TEMPLATE_STATE_START__*/
+    const DEFAULT_TEMPLATE_STATE = {
+      hideStudioButton: false,
+      meta: {
+        kicker: "Interactive Neuroscience Exhibit",
+        title: "The Anatomy of a Wager",
+        citations: "Sources: DSM-5 (APA), World Health Organization (WHO), & Incentive Sensitization Neurobiology"
+      },
+      chipStyle: {
+        outerBody: "#dc2626",
+        edgeStripe: "#f8fafc",
+        innerMold: "#7f1d1d",
+        centerCore: "#0f172a",
+        backRecovery: "#047857",
+        centerTop: "THE HOUSE EDGE",
+        centerMain: "50%",
+        centerSub: "DOPAMINE PEAK",
+        centerBottom: "WANTING > LIKING",
+        topArc: "★ 60% OF LOSSES FROM HARMFUL PLAY ★",
+        bottomArc: "★ DSM-5 BEHAVIORAL ADDICTION ★"
+      },
+      widgets: {
+        enableSpinDemo: true,
+        enableBrainSlider: true,
+        enableBreathingPacer: true
+      },
+      zones: {
+        1: {
+          id: 1,
+          pillLabel: "1. Edge Stripes (The Hook)",
+          pillColor: "#ffffff",
+          badge: "Zone 1 of 5 • Outer Rim Notches",
+          anatomyTag: "• 8 Edge Stripes",
+          title: "The Hook & Environmental Triggers",
+          accentBar: "from-amber-400 via-red-500 to-amber-500",
+          subtitle: "Clicking the alternating colored stripes around the outer rim reveals how gambling environments and apps engineer the initial behavioral hook using unpredictable reward schedules and sensory conditioning.",
+          callout: "Key Insight: Dopamine spikes highest not when a reward is guaranteed (100%), but when the odds sit at 50%—pure uncertainty.",
+          cards: [
+            {
+              icon: "shuffle",
+              tag: "Reinforcement Schedule",
+              title: "The \"Variable-Ratio\" Trap",
+              body: "Unlike a vending machine that rewards you every time, gambling uses intermittent, unpredictable rewards—the exact psychological schedule (discovered by B.F. Skinner) that produces the strongest, hardest-to-break compulsive behaviors."
+            },
+            {
+              icon: "flame",
+              tag: "Dopamine Mechanics",
+              title: "The 50% Uncertainty Spike",
+              body: "Neurobiology research shows that midbrain dopamine neurons spike highest not when a reward is guaranteed, but when the odds of winning sit right around 50%—maximum uncertainty."
+            },
+            {
+              icon: "bell-ring",
+              tag: "Pavlovian Cues",
+              title: "Sensory Conditioning",
+              body: "Flashing lights, celebratory chimes, and rapid-fire mobile app interfaces aren't just decoration; over time, the brain links those sights and sounds directly to dopamine surges, triggering cravings before a bet is even placed."
+            },
+            {
+              icon: "party-popper",
+              tag: "Slot & App Design",
+              title: "Losses Disguised as Wins (LDWs)",
+              body: "Modern multi-line slots and betting apps celebrate with lights and music even when you win back less than your original wager (e.g., betting $2 and 'winning' $0.50), tricking your brain into registering a net financial loss as a victory."
+            }
+          ]
+        },
+        2: {
+          id: 2,
+          pillLabel: "2. Outer Ring (Stats & Scale)",
+          pillColor: "#ef4444",
+          badge: "Zone 2 of 5 • Textured Base Rim",
+          anatomyTag: "• Outer Clay Body",
+          title: "By the Numbers (Stats & Scale)",
+          accentBar: "from-red-600 via-rose-500 to-amber-500",
+          subtitle: "The main colored clay-composite body of the chip holds the weight of the wager. Here are the global epidemiological facts on how gambling disorder scales and where industry revenue comes from.",
+          callout: "WHO Data: Roughly 60% of total gambling industry revenue comes from individuals gambling at harmful or disordered levels.",
+          cards: [
+            {
+              icon: "globe",
+              tag: "Epidemiology",
+              title: "Global & National Reach",
+              body: "According to the World Health Organization (WHO), an estimated 1.2% of the world's adult population lives with a diagnosable gambling disorder, while roughly 1% of US adults struggle with severe problem gambling and millions more fall into at-risk tiers."
+            },
+            {
+              icon: "pie-chart",
+              tag: "Industry Economics",
+              title: "Where the Revenue Comes From",
+              body: "Public health and WHO data indicate a stark asymmetry: people gambling at harmful or disordered levels generate roughly 60% of total gambling industry losses."
+            },
+            {
+              icon: "brain-circuit",
+              tag: "Clinical Classification",
+              title: "First Recognized Behavioral Addiction",
+              body: "Gambling disorder was the first non-substance behavior classified alongside drug and alcohol addictions in the DSM-5 because neuroimaging proves it hijacks the exact same neural reward and impulse-control pathways."
+            },
+            {
+              icon: "trending-down",
+              tag: "No Biological Ceiling",
+              title: "The \"Chasing\" Spiral",
+              body: "Unlike substance addiction—where physical intoxication or overdose eventually limits intake in a single sitting—gambling has no biological ceiling, leading to rapid financial escalation as players try to win back prior losses."
+            }
+          ]
+        },
+        3: {
+          id: 3,
+          pillLabel: "3. Inner Mold (Cognitive Traps)",
+          pillColor: "#fbbf24",
+          badge: "Zone 3 of 5 • Recessed Die Ring",
+          anatomyTag: "• Inner Mold Ring",
+          title: "Cognitive Traps & Psychology",
+          accentBar: "from-amber-500 via-yellow-400 to-orange-500",
+          subtitle: "Stamped with suits and dice inside the stripes, the recessed inner mold ring represents the cognitive distortions and mental shortcuts that convince smart people they can beat mathematically negative odds.",
+          callout: "Neuroimaging Fact: A 'near-miss' activates the brain's ventral striatum reward centers almost identically to an actual win.",
+          cards: [
+            {
+              icon: "zap",
+              tag: "fMRI Discovery",
+              title: "The Near-Miss Effect",
+              body: "Neuroimaging proves that \"almost winning\" (like two matching jackpot symbols and one just off the payline, or losing a parlay by a single point) activates the brain's ventral striatum reward centers almost identically to an actual win, fueling motivation to keep playing."
+            },
+            {
+              icon: "dice-5",
+              tag: "Probability Blindness",
+              title: "The Gambler’s Fallacy",
+              body: "The deeply ingrained false belief that past independent random outcomes influence future ones—such as believing \"Red has hit five times in a row on the roulette wheel, so Black is mathematically due next.\""
+            },
+            {
+              icon: "hand-metal",
+              tag: "Superstition & Skill",
+              title: "Illusion of Control",
+              body: "Rituals—like blowing on dice, picking \"lucky\" numbers, timing a slot stop-button press, or analyzing sports stats on high-variance props—convince the brain that personal skill can control pure statistical chance."
+            },
+            {
+              icon: "coins",
+              tag: "Dissociation",
+              title: "Abstracting Real Money",
+              body: "Physical casino chips, digital app credits, and one-tap deposits numb the insular cortex's natural \"pain of paying,\" making $100 feel like game points rather than real-world rent, tuition, or groceries."
+            }
+          ]
+        },
+        4: {
+          id: 4,
+          pillLabel: "4. Center Inlay (Brain Chemistry)",
+          pillColor: "#c084fc",
+          badge: "Zone 4 of 5 • The Core Circle",
+          anatomyTag: "• Center Inlay",
+          title: "Inside the Addicted Brain (Neurochemistry)",
+          accentBar: "from-purple-500 via-fuchsia-500 to-amber-400",
+          subtitle: "At the very center of the chip lies the neurobiological core. Chronic gambling physically remodels reward circuitry, separating the intense craving to bet from any actual enjoyment of winning.",
+          callout: "Incentive Sensitization: The addicted brain craves the 'wanting' (anticipation) even after the 'liking' (pleasure) disappears.",
+          cards: [
+            {
+              icon: "activity",
+              tag: "Incentive Sensitization",
+              title: "Anticipation Over Outcome (Wanting vs. Liking)",
+              body: "Dopamine surges while waiting for the wheel to spin or the card to flip—not just when you win. The brain becomes hyper-sensitized to the \"wanting\" (craving/anticipation) even when the \"liking\" (actual pleasure) disappears."
+            },
+            {
+              icon: "sliders-horizontal",
+              tag: "Chemical Tolerance",
+              title: "Receptor Downregulation",
+              body: "Repeated floodings of dopamine cause the brain to dial back its D2 receptors. Everyday joys—food, hobbies, time with family—stop registering as pleasurable, leaving the person chemically numb to everything except higher-stakes bets."
+            },
+            {
+              icon: "shield-off",
+              tag: "Executive Dysfunction",
+              title: "Offline \"Braking System\"",
+              body: "Chronic gambling weakens white-matter connections to the prefrontal cortex (the brain's executive decision-maker), physically impairing the ability to weigh long-term consequences during an acute urge."
+            },
+            {
+              icon: "flask-conical",
+              tag: "Neurochemical Quartet",
+              title: "Supporting Neurotransmitters",
+              body: "Low serotonin weakens impulse control; elevated norepinephrine drives the physical \"adrenaline rush\" of risk; and elevated cortisol (stress) locks in the habit loop when gambling is used to escape anxiety or depression."
+            }
+          ]
+        },
+        5: {
+          id: 5,
+          pillLabel: "5. Flip Chip (Recovery & Rewiring)",
+          pillColor: "#34d399",
+          badge: "Zone 5 of 5 • The Flip Side",
+          anatomyTag: "• Back of Chip (Recovery)",
+          title: "Rewiring & Evidence-Based Recovery",
+          accentBar: "from-emerald-400 via-teal-400 to-gold-400",
+          subtitle: "Flipping the chip reveals the path out. Because the brain is neuroplastic, the same neural pathways that adapted to compulsive betting can heal and rebuild through targeted friction, therapy, and urge management.",
+          callout: "The 15-Minute Rule: Most acute gambling cravings peak and subside like a wave within 15 to 20 minutes if you don't feed them.",
+          cards: [
+            {
+              icon: "sparkles",
+              tag: "Brain Healing",
+              title: "Neuroplasticity Works Both Ways",
+              body: "Just as the brain rewires around compulsive betting, sustained abstinence and behavioral therapy allow downregulated dopamine receptors and prefrontal \"braking\" circuits to recover sensitivity over time."
+            },
+            {
+              icon: "lock",
+              tag: "Environmental Barriers",
+              title: "Friction & Self-Exclusion",
+              body: "Deleting betting apps, installing device blockers, setting bank merchant blocks, and enrolling in state or venue self-exclusion programs create vital physical delays that give the prefrontal cortex time to override an impulse."
+            },
+            {
+              icon: "waves",
+              tag: "15-Minute Rule",
+              title: "Urge Surfing",
+              body: "Physiological cravings typically peak and subside like an ocean wave within 15 to 20 minutes if you don't feed them. Slow, 60-BPM paced breathing activates the parasympathetic nervous system to ride out the dopamine spike."
+            },
+            {
+              icon: "heart-handshake",
+              tag: "Clinical & Peer Support",
+              title: "Evidence-Based Care & 1-800-GAMBLER",
+              body: "Cognitive Behavioral Therapy (CBT) dismantles distortions like the near-miss illusion, while medications like naltrexone can blunt urge intensity. Free, confidential 24/7 support is always available by calling or texting 1-800-GAMBLER."
+            }
+          ]
+        }
+      }
+    };
+    /*__TEMPLATE_STATE_END__*/
+
+    const STORAGE_KEY = 'poker_chip_template_v2_state';
+    let appState = loadSavedState();
+
+    function loadSavedState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.zones && parsed.chipStyle) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read localStorage state:', e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_STATE));
+    }
+
+    function saveStateToBrowser() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        const statusEl = document.getElementById('autoSaveStatusText');
+        if (statusEl) {
+          statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Saved just now`;
+          setTimeout(() => {
+            statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Auto-saved to browser`;
+          }, 1200);
+        }
+      } catch (e) {
+        console.warn('Could not save state:', e);
+      }
+    }
+
+    // ============================================================================
+    // 2. AUDIO SYNTHESIZER (NO EXTERNAL MP3 DEPENDENCIES)
+    // ============================================================================
+    let currentZoneId = 1;
+    let isChipFlipped = false;
+    let exploredZones = new Set([1]);
+    let sfxEnabled = true;
+    let audioCtx = null;
+    let studioOpen = false;
+
+    // Spin Demo Counters
+    let spinRotationDeg = 0;
+    let isSpinning = false;
+    let totalSpins = 0;
+    let totalWins = 0;
+    let totalNearMisses = 0;
+
+    // Breathing Pacer State
+    let breathInterval = null;
+    let isBreathingActive = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playChipClinkSound(pitchMultiplier = 1) {
+      if (!sfxEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'triangle';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(1950 * pitchMultiplier, now);
+      osc1.frequency.exponentialRampToValueAtTime(620 * pitchMultiplier, now + 0.065);
+
+      osc2.frequency.setValueAtTime(3100 * pitchMultiplier, now);
+      osc2.frequency.exponentialRampToValueAtTime(1100 * pitchMultiplier, now + 0.045);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.08);
+      osc2.stop(now + 0.08);
+    }
+
+    function playFlipSound() {
+      if (!sfxEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.18);
+      osc.frequency.exponentialRampToValueAtTime(280, now + 0.35);
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.37);
+    }
+
+    function playNearMissChime(isActualWin = false) {
+      if (!sfxEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      const notes = isActualWin ? [523.25, 659.25, 783.99, 1046.5] : [523.25, 659.25, 783.99, 739.99];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+
+        gain.gain.setValueAtTime(0.14, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.22);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.24);
+      });
+    }
+
+    function toggleAudio() {
+      sfxEnabled = !sfxEnabled;
+      const iconEl = document.getElementById('audioIcon');
+      const labelEl = document.getElementById('audioLabel');
+      if (sfxEnabled) {
+        iconEl.setAttribute('data-lucide', 'volume-2');
+        iconEl.classList.add('text-gold-400');
+        iconEl.classList.remove('text-slate-500');
+        labelEl.textContent = 'SFX: On';
+        playChipClinkSound(1.1);
+      } else {
+        iconEl.setAttribute('data-lucide', 'volume-x');
+        iconEl.classList.remove('text-gold-400');
+        iconEl.classList.add('text-slate-500');
+        labelEl.textContent = 'SFX: Mute';
+      }
+      lucide.createIcons();
+    }
+
+    // ============================================================================
+    // 3. CHIP SVG & VISUAL THEME RENDERER
+    // ============================================================================
+    function shadeHexColor(hex, percent) {
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+      const num = parseInt(c, 16);
+      let r = (num >> 16) + percent;
+      let g = ((num >> 8) & 0x00FF) + percent;
+      let b = (num & 0x0000FF) + percent;
+      r = Math.max(0, Math.min(255, r));
+      g = Math.max(0, Math.min(255, g));
+      b = Math.max(0, Math.min(255, b));
+      return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function renderChipVisuals() {
+      const style = appState.chipStyle;
+
+      // Update Front Outer Clay Gradient
+      document.getElementById('frontOuterStop1').setAttribute('stop-color', shadeHexColor(style.outerBody, 20));
+      document.getElementById('frontOuterStop2').setAttribute('stop-color', style.outerBody);
+      document.getElementById('frontOuterStop3').setAttribute('stop-color', shadeHexColor(style.outerBody, -65));
+
+      // Update Inner Mold Gradient
+      document.getElementById('moldRingStop1').setAttribute('stop-color', shadeHexColor(style.innerMold, -35));
+      document.getElementById('moldRingStop2').setAttribute('stop-color', style.innerMold);
+      document.getElementById('moldRingStop3').setAttribute('stop-color', shadeHexColor(style.innerMold, -35));
+
+      // Update Center Inlay Core Gradient
+      document.getElementById('inlayCoreStop1').setAttribute('stop-color', shadeHexColor(style.centerCore, 25));
+      document.getElementById('inlayCoreStop2').setAttribute('stop-color', shadeHexColor(style.centerCore, -20));
+
+      // Update Back Recovery Face Gradient
+      document.getElementById('backOuterStop1').setAttribute('stop-color', shadeHexColor(style.backRecovery, 30));
+      document.getElementById('backOuterStop2').setAttribute('stop-color', style.backRecovery);
+      document.getElementById('backOuterStop3').setAttribute('stop-color', shadeHexColor(style.backRecovery, -45));
+
+      // Render 8 Edge Stripes with user's custom stripe & outerBody dot colors
+      const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+      const stripesGroup = document.getElementById('edgeStripesGroup');
+      stripesGroup.innerHTML = angles.map(deg => {
+        const isTopPayline = deg === 0;
+        const innerTabColor = isTopPayline ? '#f5c451' : '#1e293b';
+        return `
+          <g transform="rotate(${deg} 250 250)">
+            <rect x="224" y="6" width="52" height="36" rx="4" fill="${style.edgeStripe}" stroke="#cbd5e1" stroke-width="1.5"/>
+            <rect x="235" y="6" width="30" height="${isTopPayline ? 12 : 10}" fill="${innerTabColor}"/>
+            <circle cx="250" cy="28" r="4.5" fill="${style.outerBody}"/>
+          </g>
+        `;
+      }).join('');
+
+      // Render SVG Text Labels
+      document.getElementById('svgCenterTopLabel').textContent = style.centerTop;
+      document.getElementById('svgCenterMainValue').textContent = style.centerMain;
+      document.getElementById('svgCenterSubLabel').textContent = style.centerSub;
+      document.getElementById('svgCenterBottomTag').textContent = style.centerBottom;
+      document.getElementById('svgFrontTopArcText').textContent = style.topArc;
+      document.getElementById('svgFrontBottomArcText').textContent = style.bottomArc;
+
+      // Sync Mini Header Icon & Site Meta
+      document.getElementById('headerMiniChipText').textContent = style.centerMain;
+      document.getElementById('siteKickerText').textContent = appState.meta.kicker;
+      document.getElementById('siteMainTitleText').textContent = appState.meta.title;
+      document.getElementById('citationsFooterText').textContent = appState.meta.citations;
+
+      // Show or Hide Spin Demo button & box based on user widget toggle
+      const spinBtn = document.getElementById('spinChipBtn');
+      const spinBox = document.getElementById('nearMissReadout');
+      const actionGrid = document.getElementById('chipActionButtonsGrid');
+      if (appState.widgets.enableSpinDemo) {
+        spinBtn.classList.remove('hidden');
+        spinBox.classList.remove('hidden');
+        actionGrid.className = 'grid grid-cols-2 gap-3';
+      } else {
+        spinBtn.classList.add('hidden');
+        spinBox.classList.add('hidden');
+        actionGrid.className = 'grid grid-cols-1 gap-3';
+      }
+
+      // Hide Studio Toggle Button if exported in clean presentation mode
+      const studioBtn = document.getElementById('studioToggleBtn');
+      if (appState.hideStudioButton) {
+        studioBtn.classList.add('hidden');
+      } else {
+        studioBtn.classList.remove('hidden');
+      }
+    }
+
+    function renderZonePillBar() {
+      const bar = document.getElementById('zonePillBar');
+      let html = `<span class="text-[11px] font-mono uppercase tracking-wider text-slate-400 shrink-0 mr-1">Chip Layer:</span>`;
+      for (let i = 1; i <= 5; i++) {
+        const z = appState.zones[i];
+        const isActive = i === currentZoneId;
+        const activeClasses = isActive
+          ? 'bg-gold-500 text-slate-950 font-semibold shadow shadow-gold-500/30'
+          : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 font-medium';
+        const extraRight = i === 5 ? 'ml-auto border-emerald-500/40' : '';
+        html += `
+          <button onclick="selectZone(${i})" id="pill-zone-${i}" class="zone-pill shrink-0 px-3.5 py-1.5 rounded-full text-xs transition flex items-center gap-1.5 ${activeClasses} ${extraRight}">
+            <span class="w-2 h-2 rounded-full" style="background-color: ${z.pillColor || '#f5c451'}"></span>
+            <span>${z.pillLabel}</span>
+          </button>
+        `;
+      }
+      bar.innerHTML = html;
+    }
+
+    // ============================================================================
+    // 4. ZONE SELECTION & FACT CARD RENDERING
+    // ============================================================================
+    function selectZone(zoneId) {
+      const targetZone = appState.zones[zoneId];
+      if (!targetZone) return;
+
+      playChipClinkSound(0.85 + zoneId * 0.08);
+
+      currentZoneId = zoneId;
+      exploredZones.add(zoneId);
+
+      // Sync dropdown inside Studio Editor if open
+      const editorSelect = document.getElementById('editorZoneSelect');
+      if (editorSelect) editorSelect.value = String(zoneId);
+
+      // Handle 3D Chip Orientation (Zones 1-4 Front, Zone 5 Back)
+      const wrapper = document.getElementById('chip3DWrapper');
+      const faceBadge = document.getElementById('faceIndicatorBadge');
+      const flipBtnText = document.getElementById('flipChipBtnText');
+
+      if (zoneId === 5 && !isChipFlipped) {
+        isChipFlipped = true;
+        wrapper.classList.add('is-flipped');
+        playFlipSound();
+      } else if (zoneId !== 5 && isChipFlipped) {
+        isChipFlipped = false;
+        wrapper.classList.remove('is-flipped');
+        playFlipSound();
+      }
+
+      if (isChipFlipped) {
+        faceBadge.textContent = 'Back: Recovery';
+        faceBadge.className = 'font-mono text-[11px] uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        flipBtnText.textContent = 'Flip to Front (Addiction)';
+      } else {
+        faceBadge.textContent = 'Front: Addiction';
+        faceBadge.className = 'font-mono text-[11px] uppercase px-2 py-0.5 rounded bg-crimson-600/30 text-red-300 border border-red-500/30';
+        flipBtnText.textContent = 'Flip Chip (Recovery)';
+      }
+
+      // Highlight Active SVG Ring on Front Face
+      for (let i = 1; i <= 4; i++) {
+        const svgGroup = document.getElementById(`svg-zone-${i}`);
+        if (svgGroup) {
+          if (i === zoneId) svgGroup.classList.add('active-zone');
+          else svgGroup.classList.remove('active-zone');
+        }
+      }
+
+      // Update Pill Bar
+      renderZonePillBar();
+
+      // Update Main Inspection Panel
+      document.getElementById('panelTopAccent').className = `absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${targetZone.accentBar}`;
+      document.getElementById('activeZoneBadge').textContent = targetZone.badge;
+      document.getElementById('activeZoneAnatomyTag').textContent = targetZone.anatomyTag;
+      document.getElementById('activeZoneTitle').textContent = targetZone.title;
+      document.getElementById('activeZoneSubtitle').textContent = targetZone.subtitle;
+
+      // Optional Callout Banner
+      const calloutBox = document.getElementById('activeZoneCalloutBox');
+      if (targetZone.callout && targetZone.callout.trim() !== '') {
+        calloutBox.className = 'editable-highlight mt-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-gold-400/30 text-xs sm:text-sm text-gold-300 flex items-center gap-2.5';
+        calloutBox.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-gold-400 shrink-0"></i><span>${targetZone.callout}</span>`;
+      } else {
+        calloutBox.className = 'hidden';
+        calloutBox.innerHTML = '';
+      }
+
+      // Render Fact Cards
+      const cardsContainer = document.getElementById('researchCardsContainer');
+      cardsContainer.innerHTML = targetZone.cards.map((card, index) => `
+        <article onclick="openCardInStudio(${index})" class="editable-highlight bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-gold-500/40 rounded-xl p-4 sm:p-5 transition duration-200 flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <span class="text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-gold-300 border border-slate-700">
+                ${card.tag}
+              </span>
+              <div class="w-8 h-8 rounded-lg bg-slate-800/90 border border-slate-700 flex items-center justify-center text-gold-400 group-hover:scale-110 transition">
+                <i data-lucide="${card.icon || 'sparkles'}" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 class="text-base font-bold text-white mb-2 group-hover:text-gold-300 transition">
+              ${card.title}
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              ${card.body}
+            </p>
+          </div>
+        </article>
+      `).join('');
+
+      // Render Special Interactive Module (Zone 4 Brain Slider or Zone 5 Breathing Pacer)
+      renderSpecialInteractiveModule(zoneId);
+
+      // Update Progress Dots
+      updateExplorationProgress();
+
+      // Sync Studio Form Inputs with the newly selected zone
+      populateStudioZoneInputs();
+
+      lucide.createIcons();
+    }
+
+    function toggleFlipChip() {
+      if (isChipFlipped) selectZone(1);
+      else selectZone(5);
+    }
+
+    function cycleNextZone() {
+      const next = currentZoneId >= 5 ? 1 : currentZoneId + 1;
+      selectZone(next);
+    }
+
+    function updateExplorationProgress() {
+      const count = exploredZones.size;
+      document.getElementById('progressCountText').textContent = `${count}/5`;
+      const dotsContainer = document.getElementById('progressDots');
+      let dotsHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        const explored = exploredZones.has(i);
+        dotsHtml += `<span class="w-2.5 h-2.5 rounded-full transition-all ${explored ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-slate-700'}"></span>`;
+      }
+      dotsContainer.innerHTML = dotsHtml;
+    }
+
+    function previewZoneHint(zoneId) {
+      const z = appState.zones[zoneId];
+      if (z) {
+        document.getElementById('chipHoverHint').textContent = `${z.pillLabel} — ${z.title}`;
+      }
+    }
+
+    function resetZoneHint() {
+      document.getElementById('chipHoverHint').textContent = 'Click any ring on the chip to inspect its layer';
+    }
+
+    // ============================================================================
+    // 5. STUDIO VISUAL EDITOR FUNCTIONS (NO CODING REQUIRED)
+    // ============================================================================
+    function toggleStudioDrawer(forceState) {
+      studioOpen = typeof forceState === 'boolean' ? forceState : !studioOpen;
+      const drawer = document.getElementById('studioDrawer');
+      const btnText = document.getElementById('studioToggleBtnText');
+
+      if (studioOpen) {
+        drawer.classList.remove('translate-x-full');
+        document.body.classList.add('studio-edit-active');
+        btnText.textContent = 'Close Studio';
+        populateStudioZoneInputs();
+        populateStudioDesignInputs();
+      } else {
+        drawer.classList.add('translate-x-full');
+        document.body.classList.remove('studio-edit-active');
+        btnText.textContent = 'Customize Template';
+      }
+    }
+
+    function switchStudioTab(tabName) {
+      ['zone', 'design', 'settings'].forEach(t => {
+        const tabContent = document.getElementById(`studioTab-${t}`);
+        const tabBtn = document.getElementById(`tabBtn-${t}`);
+        if (t === tabName) {
+          tabContent.classList.remove('hidden');
+          tabBtn.className = 'py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 bg-gold-500 text-slate-950 font-bold';
+        } else {
+          tabContent.classList.add('hidden');
+          tabBtn.className = 'py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 text-slate-300 hover:bg-slate-800';
+        }
+      });
+    }
+
+    function openEditorTab(tabName) {
+      toggleStudioDrawer(true);
+      switchStudioTab(tabName);
+    }
+
+    function openCardInStudio(cardIdx) {
+      if (!studioOpen) return;
+      switchStudioTab('zone');
+      const cardEl = document.getElementById(`studio-card-editor-${cardIdx}`);
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        cardEl.classList.add('ring-2', 'ring-gold-400');
+        setTimeout(() => cardEl.classList.remove('ring-2', 'ring-gold-400'), 1400);
+      }
+    }
+
+    function populateStudioZoneInputs() {
+      const z = appState.zones[currentZoneId];
+      if (!z) return;
+
+      document.getElementById('editorZoneSelect').value = String(currentZoneId);
+      document.getElementById('editZoneTitleInput').value = z.title || '';
+      document.getElementById('editZonePillInput').value = z.pillLabel || '';
+      document.getElementById('editZoneAnatomyInput').value = z.anatomyTag || '';
+      document.getElementById('editZoneSubtitleInput').value = z.subtitle || '';
+      document.getElementById('editZoneCalloutInput').value = z.callout || '';
+
+      renderStudioCardsList();
+    }
+
+    function renderStudioCardsList() {
+      const z = appState.zones[currentZoneId];
+      const listEl = document.getElementById('editorCardsList');
+      if (!z || !listEl) return;
+
+      listEl.innerHTML = z.cards.map((card, idx) => `
+        <div id="studio-card-editor-${idx}" class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5 transition">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[11px] text-gold-400 font-semibold">Card #${idx + 1}</span>
+            <button onclick="removeFactCard(${idx})" class="text-slate-400 hover:text-red-400 text-[11px] flex items-center gap-1 transition" title="Delete this card">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Remove</span>
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Category Tag</label>
+              <input type="text" value="${escapeHtmlAttr(card.tag)}" oninput="updateFactCardField(${idx}, 'tag', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-gold-400" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Card Title</label>
+              <input type="text" value="${escapeHtmlAttr(card.title)}" oninput="updateFactCardField(${idx}, 'title', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white text-xs font-semibold focus:outline-none focus:border-gold-400" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-0.5">Fact Explanation / Research Tidbit</label>
+            <textarea rows="3" oninput="updateFactCardField(${idx}, 'body', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-gold-400">${escapeHtmlAttr(card.body)}</textarea>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function escapeHtmlAttr(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function updateCurrentZoneField(field, val) {
+      appState.zones[currentZoneId][field] = val;
+      saveStateToBrowser();
+      selectZone(currentZoneId);
+    }
+
+    function updateFactCardField(cardIdx, field, val) {
+      const card = appState.zones[currentZoneId].cards[cardIdx];
+      if (!card) return;
+      card[field] = val;
+      saveStateToBrowser();
+
+      // Re-render main cards view without losing focus in the studio input
+      const targetZone = appState.zones[currentZoneId];
+      const cardsContainer = document.getElementById('researchCardsContainer');
+      cardsContainer.innerHTML = targetZone.cards.map((c, index) => `
+        <article onclick="openCardInStudio(${index})" class="editable-highlight bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-gold-500/40 rounded-xl p-4 sm:p-5 transition duration-200 flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <span class="text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-gold-300 border border-slate-700">
+                ${c.tag}
+              </span>
+              <div class="w-8 h-8 rounded-lg bg-slate-800/90 border border-slate-700 flex items-center justify-center text-gold-400">
+                <i data-lucide="${c.icon || 'sparkles'}" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 class="text-base font-bold text-white mb-2">
+              ${c.title}
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              ${c.body}
+            </p>
+          </div>
+        </article>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function addFactCardToCurrentZone() {
+      appState.zones[currentZoneId].cards.push({
+        icon: "sparkles",
+        tag: "New Research Point",
+        title: "Custom Fact Title",
+        body: "Click here in the template studio to type your own gambling addiction statistic, brain chemistry note, or recovery tip."
+      });
+      saveStateToBrowser();
+      selectZone(currentZoneId);
+    }
+
+    function removeFactCard(cardIdx) {
+      const cards = appState.zones[currentZoneId].cards;
+      if (cards.length <= 1) return;
+      cards.splice(cardIdx, 1);
+      saveStateToBrowser();
+      selectZone(currentZoneId);
+    }
+
+    function populateStudioDesignInputs() {
+      const s = appState.chipStyle;
+      document.getElementById('colorOuterBody').value = s.outerBody;
+      document.getElementById('colorEdgeStripes').value = s.edgeStripe;
+      document.getElementById('colorInnerMold').value = s.innerMold;
+      document.getElementById('colorCenterCore').value = s.centerCore;
+      document.getElementById('colorBackRecovery').value = s.backRecovery;
+
+      document.getElementById('chipTextMainVal').value = s.centerMain;
+      document.getElementById('chipTextTopLabel').value = s.centerTop;
+      document.getElementById('chipTextSubLabel').value = s.centerSub;
+      document.getElementById('chipTextBottomTag').value = s.centerBottom;
+      document.getElementById('chipTextTopArc').value = s.topArc;
+      document.getElementById('chipTextBottomArc').value = s.bottomArc;
+
+      document.getElementById('siteKickerInput').value = appState.meta.kicker;
+      document.getElementById('siteTitleInput').value = appState.meta.title;
+      document.getElementById('siteCitationsInput').value = appState.meta.citations;
+
+      document.getElementById('toggleSpinDemoCheck').checked = !!appState.widgets.enableSpinDemo;
+      document.getElementById('toggleBrainSliderCheck').checked = !!appState.widgets.enableBrainSlider;
+      document.getElementById('toggleBreathingCheck').checked = !!appState.widgets.enableBreathingPacer;
+    }
+
+    function updateChipColor(part, hexVal) {
+      appState.chipStyle[part] = hexVal;
+      saveStateToBrowser();
+      renderChipVisuals();
+    }
+
+    function applyChipThemePreset(presetName) {
+      const presets = {
+        crimson: {
+          outerBody: "#dc2626",
+          edgeStripe: "#f8fafc",
+          innerMold: "#7f1d1d",
+          centerCore: "#0f172a",
+          backRecovery: "#047857"
+        },
+        royal: {
+          outerBody: "#1d4ed8",
+          edgeStripe: "#fef08a",
+          innerMold: "#1e3a8a",
+          centerCore: "#090d16",
+          backRecovery: "#0d9488"
+        },
+        obsidian: {
+          outerBody: "#1e293b",
+          edgeStripe: "#f5c451",
+          innerMold: "#0f172a",
+          centerCore: "#020617",
+          backRecovery: "#059669"
+        },
+        violet: {
+          outerBody: "#7e22ce",
+          edgeStripe: "#f8fafc",
+          innerMold: "#4c1d95",
+          centerCore: "#0f172a",
+          backRecovery: "#10b981"
+        }
+      };
+      const chosen = presets[presetName];
+      if (!chosen) return;
+      Object.assign(appState.chipStyle, chosen);
+      saveStateToBrowser();
+      populateStudioDesignInputs();
+      renderChipVisuals();
+      playChipClinkSound(1.15);
+    }
+
+    function updateChipText(field, val) {
+      appState.chipStyle[field] = val;
+      saveStateToBrowser();
+      renderChipVisuals();
+    }
+
+    function updateSiteMeta(field, val) {
+      appState.meta[field] = val;
+      saveStateToBrowser();
+      renderChipVisuals();
+    }
+
+    function updateWidgetToggle(widgetKey, isChecked) {
+      appState.widgets[widgetKey] = isChecked;
+      saveStateToBrowser();
+      renderChipVisuals();
+      renderSpecialInteractiveModule(currentZoneId);
+    }
+
+    function resetTemplateToDefaults() {
+      localStorage.removeItem(STORAGE_KEY);
+      appState = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE_STATE));
+      renderChipVisuals();
+      selectZone(1);
+      populateStudioDesignInputs();
+      playChipClinkSound(0.9);
+    }
+
+    // ============================================================================
+    // 6. ONE-CLICK STANDALONE HTML EXPORT (BAKES EDITS INTO DOWNLOADABLE FILE)
+    // ============================================================================
+    function exportCustomHTMLFile() {
+      const hideStudio = document.getElementById('hideStudioOnExportCheck').checked;
+      const exportState = JSON.parse(JSON.stringify(appState));
+      exportState.hideStudioButton = hideStudio;
+
+      // Get current full HTML source
+      let fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+      // Replace the DEFAULT_TEMPLATE_STATE block with the user's customized state
+      const stateBlockRegex = /\/\*__TEMPLATE_STATE_START__\*\/[\s\S]*?\/\*__TEMPLATE_STATE_END__\*\//;
+      const newStateBlock = `/*__TEMPLATE_STATE_START__*/\n    const DEFAULT_TEMPLATE_STATE = ${JSON.stringify(exportState, null, 2)};\n    /*__TEMPLATE_STATE_END__*/`;
+
+      fullHtml = fullHtml.replace(stateBlockRegex, newStateBlock);
+
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================================
+    // 7. SPECIAL INTERACTIVE MODULES (ZONE 4 BRAIN METER & ZONE 5 BREATHING PACER)
+    // ============================================================================
+    function renderSpecialInteractiveModule(zoneId) {
+      if (zoneId !== 5 && breathInterval) {
+        clearInterval(breathInterval);
+        breathInterval = null;
+        isBreathingActive = false;
+      }
+
+      const container = document.getElementById('specialInteractiveModule');
+
+      if (zoneId === 4 && appState.widgets.enableBrainSlider) {
+        container.innerHTML = `
+          <div class="bg-gradient-to-br from-slate-900 via-purple-950/30 to-slate-900 border border-purple-500/30 rounded-xl p-4 sm:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="gauge" class="w-4 h-4 text-purple-400"></i>
+                <h4 class="text-sm font-bold text-white">Interactive Brain Stage Simulator: Incentive Sensitization</h4>
+              </div>
+              <span class="text-[11px] font-mono text-purple-300">Slide to compare stages</span>
+            </div>
+            <p class="text-xs text-slate-300 mb-4">
+              Drag the timeline slider below to see how repeated gambling shifts the brain from casual recreation to compulsive addiction:
+            </p>
+            <input type="range" min="1" max="3" value="1" id="brainStageSlider" oninput="updateBrainStage(this.value)" class="w-full accent-gold-400 cursor-pointer mb-3" />
+            <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-4">
+              <span>Stage 1: Casual Novelty</span>
+              <span>Stage 2: Tolerance Forming</span>
+              <span>Stage 3: Compulsive Loop</span>
+            </div>
+            <div id="brainStageMetrics" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"></div>
+          </div>
+        `;
+        updateBrainStage(1);
+      } else if (zoneId === 5 && appState.widgets.enableBreathingPacer) {
+        container.innerHTML = `
+          <div class="bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/40 rounded-xl p-4 sm:p-5">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="space-y-1.5 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold uppercase">Interactive Recovery Tool</span>
+                  <h4 class="text-sm sm:text-base font-bold text-white">60-BPM "Urge Surfing" Breathing Pacer</h4>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  A gambling craving peaks in <strong>15–20 minutes</strong>. Guided 4-second rhythmic breathing slows heart rate and gives your prefrontal cortex time to come back online.
+                </p>
+                <div class="pt-2 flex items-center gap-3">
+                  <button onclick="toggleBreathingPacer()" id="startBreathBtn" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition flex items-center gap-1.5">
+                    <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                    <span>Start 4-4-4 Breathing</span>
+                  </button>
+                  <span id="breathInstructionText" class="font-mono text-xs text-emerald-300">Ready to begin</span>
+                </div>
+              </div>
+              <div class="w-28 h-28 flex items-center justify-center relative shrink-0">
+                <div id="breathOrb" class="breath-circle w-14 h-14 rounded-full bg-emerald-500/30 border-2 border-emerald-400 flex items-center justify-center text-[11px] font-mono font-bold text-emerald-200 shadow-lg shadow-emerald-500/20">
+                  CALM
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = '';
+      }
+      lucide.createIcons();
+    }
+
+    function updateBrainStage(stageVal) {
+      const stage = parseInt(stageVal, 10);
+      const metricsEl = document.getElementById('brainStageMetrics');
+      if (!metricsEl) return;
+
+      const stageData = {
+        1: {
+          wanting: "45% (Moderate)",
+          wantingWidth: "w-[45%]",
+          liking: "85% (High Pleasure)",
+          likingWidth: "w-[85%]",
+          prefrontal: "90% (Strong Brakes)",
+          prefrontalWidth: "w-[90%]"
+        },
+        2: {
+          wanting: "75% (Rising Craving)",
+          wantingWidth: "w-[75%]",
+          liking: "45% (Blunted High)",
+          likingWidth: "w-[45%]",
+          prefrontal: "55% (Weakening Control)",
+          prefrontalWidth: "w-[55%]"
+        },
+        3: {
+          wanting: "98% (Intense Compulsion)",
+          wantingWidth: "w-[98%]",
+          liking: "15% (Numb / Anhedonia)",
+          likingWidth: "w-[15%]",
+          prefrontal: "20% (Brakes Offline)",
+          prefrontalWidth: "w-[20%]"
+        }
+      }[stage];
+
+      metricsEl.innerHTML = `
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+          <div class="flex justify-between text-[11px] mb-1">
+            <span class="text-slate-400">Dopamine "Wanting"</span>
+            <span class="font-mono text-red-400 font-semibold">${stageData.wanting}</span>
+          </div>
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full bg-red-500 transition-all duration-300 ${stageData.wantingWidth}"></div>
+          </div>
+        </div>
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+          <div class="flex justify-between text-[11px] mb-1">
+            <span class="text-slate-400">Actual "Liking" (Joy)</span>
+            <span class="font-mono text-amber-300 font-semibold">${stageData.liking}</span>
+          </div>
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full bg-amber-400 transition-all duration-300 ${stageData.likingWidth}"></div>
+          </div>
+        </div>
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+          <div class="flex justify-between text-[11px] mb-1">
+            <span class="text-slate-400">Prefrontal Braking</span>
+            <span class="font-mono text-emerald-400 font-semibold">${stageData.prefrontal}</span>
+          </div>
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-400 transition-all duration-300 ${stageData.prefrontalWidth}"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleBreathingPacer() {
+      const btn = document.getElementById('startBreathBtn');
+      const instruction = document.getElementById('breathInstructionText');
+      const orb = document.getElementById('breathOrb');
+      if (!btn || !orb) return;
+
+      if (isBreathingActive) {
+        clearInterval(breathInterval);
+        breathInterval = null;
+        isBreathingActive = false;
+        btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5"></i><span>Start 4-4-4 Breathing</span>`;
+        instruction.textContent = 'Session paused';
+        orb.style.transform = 'scale(1)';
+        orb.textContent = 'CALM';
+        lucide.createIcons();
+        return;
+      }
+
+      isBreathingActive = true;
+      btn.innerHTML = `<i data-lucide="square" class="w-3.5 h-3.5"></i><span>Stop Pacer</span>`;
+      lucide.createIcons();
+
+      let phase = 0;
+      const runPhase = () => {
+        if (!document.getElementById('breathOrb')) return;
+        if (phase === 0) {
+          instruction.textContent = 'Inhale slowly through nose (4s)...';
+          orb.style.transform = 'scale(1.65)';
+          orb.style.backgroundColor = 'rgba(16, 185, 129, 0.45)';
+          orb.textContent = 'INHALE';
+          playChipClinkSound(0.7);
+        } else if (phase === 1) {
+          instruction.textContent = 'Hold breath gently (4s)...';
+          orb.style.backgroundColor = 'rgba(245, 196, 81, 0.35)';
+          orb.textContent = 'HOLD';
+        } else {
+          instruction.textContent = 'Exhale slowly & release urge (4s)...';
+          orb.style.transform = 'scale(0.95)';
+          orb.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+          orb.textContent = 'EXHALE';
+          playChipClinkSound(0.55);
+        }
+        phase = (phase + 1) % 3;
+      };
+
+      runPhase();
+      breathInterval = setInterval(runPhase, 4000);
+    }
+
+    // ============================================================================
+    // 8. INTERACTIVE "NEAR-MISS" SPIN SIMULATOR
+    // ============================================================================
+    function triggerNearMissSpin() {
+      if (isSpinning) return;
+
+      if (isChipFlipped) selectZone(3);
+
+      isSpinning = true;
+      totalSpins++;
+
+      const pointer = document.getElementById('spinPointer');
+      const spinContainer = document.getElementById('chipSpinContainer');
+      const resultMsg = document.getElementById('spinResultMessage');
+      const statsCounter = document.getElementById('spinStatsCounter');
+
+      pointer.classList.remove('opacity-0');
+      pointer.classList.add('pointer-bounce');
+
+      const isRareWin = totalSpins === 2;
+      let targetOffsetDeg;
+
+      if (isRareWin) {
+        targetOffsetDeg = 0;
+        totalWins++;
+      } else {
+        const side = Math.random() > 0.5 ? 1 : -1;
+        targetOffsetDeg = side * (15 + Math.floor(Math.random() * 4));
+        totalNearMisses++;
+      }
+
+      const baseSpins = Math.floor(spinRotationDeg / 360) * 360 + 1440;
+      spinRotationDeg = baseSpins + targetOffsetDeg;
+
+      spinContainer.style.transform = `rotate(${spinRotationDeg}deg)`;
+      resultMsg.innerHTML = `<span class="text-gold-300 font-semibold">Spinning...</span> Watch your anticipation spike while waiting for the outcome (Zone 4: Dopamine peaks during uncertainty).`;
+
+      let tickCount = 0;
+      const tickTimer = setInterval(() => {
+        tickCount++;
+        playChipClinkSound(0.9 + (tickCount % 3) * 0.1);
+        if (tickCount >= 10) clearInterval(tickTimer);
+      }, 210);
+
+      setTimeout(() => {
+        isSpinning = false;
+        pointer.classList.remove('pointer-bounce');
+        playNearMissChime(isRareWin);
+
+        statsCounter.textContent = `Spins: ${totalSpins} | Wins: ${totalWins} | Near-Misses: ${totalNearMisses}`;
+
+        if (isRareWin) {
+          resultMsg.innerHTML = `<span class="text-emerald-400 font-bold">EARLY HOOK WIN!</span> Variable-ratio reinforcement often gives an early payout so your brain tags the chip as high-value. Spin again to see what happens next...`;
+        } else {
+          resultMsg.innerHTML = `<span class="text-amber-400 font-bold">ENGINEERED NEAR-MISS!</span> The chip stopped millimeters away from the Gold Payline stripe. Neuroimaging shows your ventral striatum just fired almost like a real win—tricking you into spinning again!`;
+        }
+      }, 2600);
+    }
+
+    // Keyboard shortcuts (1-5 to switch zones, F to flip, but ignore when typing in inputs)
+    window.addEventListener('keydown', (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (['1', '2', '3', '4', '5'].includes(e.key)) {
+        selectZone(parseInt(e.key, 10));
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFlipChip();
+      }
+    });
+
+    // Initialize on window load
+    window.onload = function () {
+      renderChipVisuals();
+      selectZone(1);
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
